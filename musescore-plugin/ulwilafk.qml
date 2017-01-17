@@ -72,10 +72,16 @@ function getDurationSign(pitch, duration, isRest, isMirrored) {
       if (!isRest) {
             if (pitch == 60-12) {
                   if (duration == 480/2) { durationSign = isMirrored ? "N" : "M"; }
+                  else if (duration == 480/4) { durationSign = "C"; }
                   else { durationSign = "H"; }
+            } else if (pitch == 60+12) {
+                  if (duration == 480/2) { durationSign = isMirrored ? "L" : "K"; }
+                  else if (duration == 480/4) { durationSign = "C"; }
+                  else { durationSign = "G"; }
             }
             else if (pitch == 60+12+12) {
                   if (duration == 480/2) { durationSign = isMirrored ? "P" : "O"; }
+                  else if (duration == 480/4) { durationSign = "C"; }
                   else { durationSign = "I"; }
             } else {
                   if (duration == 480/2) durationSign = isMirrored ? "J" : "B";
@@ -100,14 +106,23 @@ function createSharpNote(lowerPitch, duration, cursor) {
       if (duration % 480 == 0) {
             for (var i = 0; i<duration; i+=480) {
                   drawNotePart(lowerPitch, 240, cursor, currentOffset);
-                  currentOffset += 2.7;
+                  currentOffset += 2.6;
                   drawNotePart(lowerPitch+2, 240, cursor, currentOffset, true);
-                  currentOffset += 2.7;                              
+                  currentOffset += 2.6;                              
             }
       } else if (duration == 240) {
-            drawNotePart(lowerPitch, duration/2, cursor, currentOffset);
-            currentOffset += 0.9;
-            drawNotePart(lowerPitch+2, duration/2, cursor, currentOffset);
+            var octaveSign = addOctaveSign(lowerPitch+2, duration, cursor);
+            if (octaveSign) {
+                  octaveSign.pos.x = defaultXOffset + currentOffset;
+                  octaveSign.pos.y = defaultYOffset;
+            }
+            var noteSign = createSingleNoteSign(lowerPitch, duration/2, cursor, false, "V");
+            noteSign.pos.x = defaultXOffset + currentOffset;
+            noteSign.pos.y = defaultYOffset;
+            currentOffset += 1.4;
+            noteSign = createSingleNoteSign(lowerPitch + 2, duration/2, cursor, false, "W");
+            noteSign.pos.x = defaultXOffset + currentOffset;
+            noteSign.pos.y = defaultYOffset;
       }
 }
 
@@ -137,9 +152,9 @@ function createSingleNote(pitch, duration, cursor, mirror) {
       return noteSign;
 }
 
-function createSingleNoteSign(pitch, duration, cursor, mirror) {
+function createSingleNoteSign(pitch, duration, cursor, mirror, overrideSign) {
       var text = newElement(Element.STAFF_TEXT);
-      var durationSign = getDurationSign(pitch, duration, false, mirror);
+      var durationSign = overrideSign ? overrideSign : getDurationSign(pitch, duration, false, mirror);
       text.color = getColor(pitch);
       text.text = noteTemplate + durationSign;
       cursor.add(text);
@@ -186,6 +201,10 @@ function addTriangle(cursor) {
       cursor.add(text);
 }
 
+function isSharp(pitch) {
+      return pitch % 12 == 1 || pitch % 12 == 3 || pitch % 12 == 6 || pitch % 12 == 8 || pitch % 12 == 10;
+}
+
 function addColorNote(cursor) {
       if (cursor.segment.annotations[0]) {
             if (cursor.segment.annotations[0].type == Element.STAFF_TEXT) {
@@ -199,7 +218,7 @@ function addColorNote(cursor) {
       var element = cursor.element;
       if (element.type == Element.CHORD) {
             var note = element.notes[0];
-            if (note.pitch % 12 == 8) {
+            if (isSharp(note.pitch)) {
                   createSharpNote(note.pitch-1, element.durationType, cursor);
             } else {
                   createSingleNote(note.pitch, element.durationType, cursor);
