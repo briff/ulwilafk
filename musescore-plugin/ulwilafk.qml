@@ -47,12 +47,27 @@ function toUlwila() {
                if (cursor.element && (cursor.element.type == Element.CHORD ||
                         cursor.element.type == Element.REST)) {
                   addColorNote(cursor);
+                  for (var i = 0; cursor.element.elements && i<cursor.element.elements.count; i++) {
+                      elements[i].visible = false;
+                  }
                }
-               cursor.element.visible = false;
+
                cursor.next();
 
             }
       }
+
+            for (var track = 0; track < curScore.ntracks; ++track) {
+                  var segment = curScore.firstSegment();
+                  while (segment) {
+                        var element = segment.elementAt(track);
+                        if (element) {
+                              element.visible = false;
+                              }
+                        segment = segment.next;
+                        }
+                  }
+            
       curScore.endCmd();
 }
 
