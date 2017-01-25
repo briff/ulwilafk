@@ -2,15 +2,13 @@ import QtQuick 2.0
 import MuseScore 1.0
 import QtQuick.Controls 1.3
 
-
-
 MuseScore {
 
     property variant defaultXOffset : -1.8;
     property variant defaultYOffset : 2.9;
     property variant noteTemplate : "<font size=\"36\"/><font face=\"UlwilaFK\"/>";
 
-    menuPath:    "Plugins.ulwila"
+    menuPath:    "Plugins.UlwilaFK"
     version:     "1.0"
     description: qsTr("Create ulwila color sheet")
     pluginType: "dialog"
@@ -69,6 +67,7 @@ function showEverything() {
       var cursor = curScore.newCursor();
       
       curScore.endCmd();
+      Qt.quit();
 }
 
 function toUlwila() {
@@ -109,6 +108,7 @@ function toUlwila() {
 
             
       curScore.endCmd();
+      Qt.quit();
 }
 
 function getColor(pitch) {
