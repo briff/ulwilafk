@@ -24,6 +24,53 @@ MuseScore {
         console.log(score.name)
     }
 
+function hideEverything() {
+            for (var track = 0; track < curScore.ntracks; ++track) {
+                  var segment = curScore.firstSegment();
+                  while (segment) {
+                        var element = segment.elementAt(track);
+                        if (element) {
+                              element.visible = false;
+                              if (element.stem) { element.stem.visible = false; }
+                              if (element.beam) { element.beam.visible = false; }
+                              if (element.hook) { element.hook.visible = false; }
+                              if (element.accidental) { element.accidental.visible = false; }
+                        }
+                        segment = segment.next;
+                        }
+                  }
+
+}
+
+function showEverything() {
+      curScore.startCmd();
+      for (var track = 0; track < curScore.ntracks; ++track) {
+                  var segment = curScore.firstSegment();
+                  while (segment) {
+                        var element = segment.elementAt(track);
+                        if (element) {
+                              element.visible = true;
+                              if (element.stem) { element.stem.visible = true; }
+                              if (element.beam) { element.beam.visible = true; }
+                              if (element.hook) { element.hook.visible = true; }
+                              if (element.accidental) { element.accidental.visible = true; }
+
+                              if (element.type == Element.CHORD) {
+                                    for (var noteIndex = 0; noteIndex < element.notes.length; noteIndex++) {
+                                        var note = element.notes[noteIndex];
+                                        note.visible = true;
+
+                                    }
+                              }
+                        }
+                        segment = segment.next;
+                  }
+            }
+      var cursor = curScore.newCursor();
+      
+      curScore.endCmd();
+}
+
 function toUlwila() {
 
 
@@ -43,30 +90,23 @@ function toUlwila() {
             cursor.voice    = 0;
             cursor.staffIdx = staff;
             cursor.rewind(0); // beginning of score
+            var lastProcessedMeasure;
             while (cursor.segment) {
                if (cursor.element && (cursor.element.type == Element.CHORD ||
                         cursor.element.type == Element.REST)) {
                   addColorNote(cursor);
-                  for (var i = 0; cursor.element.elements && i<cursor.element.elements.count; i++) {
-                      elements[i].visible = false;
+                  if (cursor.measure && lastProcessedMeasure != cursor.measure) {
+                        console.log("last processed measure:"+lastProcessedMeasure);
+                        console.log("current measure: "+cursor.measure);
+                        lastProcessedMeasure = cursor.measure;
+                        addTriangle(cursor);
                   }
                }
-
                cursor.next();
-
             }
       }
+      hideEverything();
 
-            for (var track = 0; track < curScore.ntracks; ++track) {
-                  var segment = curScore.firstSegment();
-                  while (segment) {
-                        var element = segment.elementAt(track);
-                        if (element) {
-                              element.visible = false;
-                              }
-                        segment = segment.next;
-                        }
-                  }
             
       curScore.endCmd();
 }
@@ -221,6 +261,7 @@ function isSharp(pitch) {
 }
 
 function addColorNote(cursor) {
+      /*
       if (cursor.segment.annotations[0]) {
             if (cursor.segment.annotations[0].type == Element.STAFF_TEXT) {
                   var textElement = cursor.segment.annotations[0];
@@ -229,7 +270,7 @@ function addColorNote(cursor) {
                         textElement.visible = false;
                   }
             }
-      }
+      }*/
       var element = cursor.element;
       if (element.type == Element.CHORD) {
             var note = element.notes[0];
@@ -242,12 +283,6 @@ function addColorNote(cursor) {
       } else if (element.type == Element.REST) {
             createRest(cursor);
       }
-
-
-      if (element.stem) { element.stem.visible = false; }
-      if (element.beam) { element.beam.visible = false; }
-      if (element.hook) { element.hook.visible = false; }
-      if (element.accidental) { element.accidental.visible = false; }
       
 
 }
@@ -265,8 +300,8 @@ Item {
       Button {
             id: btnOriginal
             anchors.left: btnUlwila.right
-            text: "Original"
-            onClicked: { }
+            text: "Everything visible"
+            onClicked: { showEverything(); }
       }
 
       Button {
