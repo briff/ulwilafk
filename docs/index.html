@@ -1,1 +1,48 @@
-<h1>UlwilaFK</h1>
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+
+<body>
+<div class="container">
+    <h1>Ulwila FK <small>Ulwila colored score generator</small></h1>
+    <p>Using this plugin for MuseScore you can create colored scores according to the system developed by Heinrich Ullrich. For a description, look <a href="http://www.parafonia.hu/index.php?option=com_content&task=view&id=29&Itemid=41">here</a>. <small> The FK in the project's name is related to my godson, Kristof.</small>
+<p><img src="hu/ulwila0.png"><br><img src="hu/ulwila0_u.png">
+    <h2>Installation</h2>
+    Installation consists of 3 parts: we need a special font, MuseScore and the UlwilaFK plugin.
+    <h3>1. Installing the UlwilaFK font</h3>
+    <p>Download from here: <a href="https://github.com/briff/ulwilafk/raw/master/font/UlwilaFK.ttf">UlwilaFK.ttf</a>, and install.
+    <h3>2. Install MuseScore</h3>
+    <p><small>You can skip this step if you've already got MuseScore installed on your system. :)</small>
+    <p>Install MuseScore from here: <a href="https://musescore.org/hu">https://musescore.org/hu</a>
+    <h3>3. Install MuseScore plugin</h3>
+    <p>This is a bit more complicated but you only need to do this once.
+    <ol>
+        <li>Start and close MuseScore (I'm not sure if this step is really needed, perhaps the installer has already created the necessary folders.)
+        <li>
+Download and copy <a href="https://raw.githubusercontent.com/briff/ulwilafk/master/musescore-plugin/ulwilafk.qml">ulwilafk.qml</a> file to <mark>Documents\MuseScore2\Plugins</mark>
+<li>
+Start MuseScore. Either open an existing score (see <a href="//musescore.com">musescore.com</a>), or create one. (Handbook <a href="https://musescore.org/en/handbook/create-new-score">here</a>) 
+Downloaded scores should be translated to C-major/A-minor (using Notes>Transpose).
+<li>Need to do only once: Choose <b>Plugin manager</b> from <b>Plugins</b> menu and mark <b>ulwilafk</b> to enable it.
+<li>
+After this the Plugins menu will contain an <b>UlwilaFK</b> item. Clicking on this a small dialog window will appear, where pressing the Ulwila button will create the score. You can undo that with <kbd>Ctrl-Z</kbd>. 
+<li>Converting to Ulwila will make most of the unneeded musical signs invisible, but not all (a limitation of current MuseScore version). 
+The remaining can be easily made invisible by selecting them with a click and pressing the <kbd>v</kbd> key. The 5 staff lines can be hidden by clicking with the right button and selecting <b>Staff properties</b> and clicking <b>Invisible staff lines</b>.
+ </ol>
+<h2>Examples</h2>
+<img src="aveverum_ulwila.png" /><br>(Original <a href="https://musescore.com/user/12898991/scores/3305716">here</a>)
+    
+</div>
+</body>
+
+</html>
+
