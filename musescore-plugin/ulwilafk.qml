@@ -7,6 +7,8 @@ MuseScore {
     property variant defaultXOffset : -1.8;
     property variant defaultYOffset : 2.9;
     property variant noteTemplate : "<font size=\"36\"/><font face=\"UlwilaFK\"/>";
+    property variant noteSignSize : 5.5;
+    property variant lastProcessedMeasure: 0;
 
     menuPath:    "Plugins.UlwilaFK"
     version:     "1.0"
@@ -57,7 +59,6 @@ function showEverything() {
                                     for (var noteIndex = 0; noteIndex < element.notes.length; noteIndex++) {
                                         var note = element.notes[noteIndex];
                                         note.visible = true;
-
                                     }
                               }
                         }
@@ -71,8 +72,6 @@ function showEverything() {
 }
 
 function toUlwila() {
-
-
       console.log("Convert to Ulwila");
       if (typeof curScore === 'undefined')
          return;
@@ -89,17 +88,11 @@ function toUlwila() {
             cursor.voice    = 0;
             cursor.staffIdx = staff;
             cursor.rewind(0); // beginning of score
-            var lastProcessedMeasure;
             while (cursor.segment) {
                if (cursor.element && (cursor.element.type == Element.CHORD ||
                         cursor.element.type == Element.REST)) {
+
                   addColorNote(cursor);
-                  if (cursor.measure && lastProcessedMeasure != cursor.measure) {
-                        console.log("last processed measure:"+lastProcessedMeasure);
-                        console.log("current measure: "+cursor.measure);
-                        lastProcessedMeasure = cursor.measure;
-                        addTriangle(cursor);
-                  }
                }
                cursor.next();
             }
@@ -156,13 +149,13 @@ function getDurationSign(pitch, duration, isRest, isMirrored) {
       return durationSign;
 }
 
-function createSharpNote(lowerPitch, duration, cursor) {
+function createSharpNote(lowerPitch, duration, cursor, chordNoteOffset) {
       var currentOffset = 0;
       if (duration % 480 == 0) {
             for (var i = 0; i<duration; i+=480) {
-                  drawNotePart(lowerPitch, 240, cursor, currentOffset);
+                  drawNotePart(lowerPitch, 240, cursor, currentOffset, false, chordNoteOffset);
                   currentOffset += 2.6;
-                  drawNotePart(lowerPitch+2, 240, cursor, currentOffset, true);
+                  drawNotePart(lowerPitch+2, 240, cursor, currentOffset, true, chordNoteOffset);
                   currentOffset += 2.6;                              
             }
       } else if (duration == 240) {
@@ -181,27 +174,27 @@ function createSharpNote(lowerPitch, duration, cursor) {
       }
 }
 
-function drawNotePart(pitch, duration, cursor, currentOffset, mirror) {
-      var octaveSign = addOctaveSign(pitch, duration, cursor);
+function drawNotePart(pitch, duration, cursor, currentOffset, mirror, chordNoteOffset) {
+      var octaveSign = addOctaveSign(pitch, duration, cursor, mirror);
       if (octaveSign) {
             octaveSign.pos.x = defaultXOffset + currentOffset;
-            octaveSign.pos.y = defaultYOffset;
+            octaveSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
       }
       var noteSign = createSingleNoteSign(pitch, duration, cursor, mirror);
       noteSign.pos.x = defaultXOffset + currentOffset;
-      noteSign.pos.y = defaultYOffset;
+      noteSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
       if (duration == 120) { noteSign.pos.x = 0.4 + currentOffset; }
       return noteSign;
 }
 
-function createSingleNote(pitch, duration, cursor, mirror) {
+function createSingleNote(pitch, duration, cursor, chordNoteOffset) {
       var currentOffset = 0;
       var temp = duration;
       var noteSign;
       while (temp>0) {
-            if (temp >= 480) { noteSign = drawNotePart(pitch, 480, cursor, currentOffset); temp -= 480; currentOffset += 5.2}
-            else if (temp >= 240) { noteSign = drawNotePart(pitch, 240, cursor, currentOffset, mirror); temp -= 240; currentOffset += 2.6}
-            else if (temp >= 120) { noteSign = drawNotePart(pitch, 120, cursor, currentOffset); temp -= 120;}
+            if (temp >= 480) { noteSign = drawNotePart(pitch, 480, cursor, currentOffset, false, chordNoteOffset); temp -= 480; currentOffset += 5.2}
+            else if (temp >= 240) { noteSign = drawNotePart(pitch, 240, cursor, currentOffset, false, chordNoteOffset); temp -= 240; currentOffset += 2.6}
+            else if (temp >= 120) { noteSign = drawNotePart(pitch, 120, cursor, currentOffset, false, chordNoteOffset); temp -= 120;}
             else { temp = 0; }
       }
       return noteSign;
@@ -248,11 +241,11 @@ function createRest(cursor) {
       cursor.add(text);
 }
 
-function addTriangle(cursor) {
+function addTriangle(cursor, triangleOffset) {
       var text = newElement(Element.STAFF_TEXT);
       text.text = noteTemplate + "&lt;";
       text.pos.x = -1.9;
-      text.pos.y = 0;
+      text.pos.y = 0 + triangleOffset * noteSignSize / 2.0;
       cursor.add(text);
 }
 
@@ -261,30 +254,44 @@ function isSharp(pitch) {
 }
 
 function addColorNote(cursor) {
-      /*
-      if (cursor.segment.annotations[0]) {
-            if (cursor.segment.annotations[0].type == Element.STAFF_TEXT) {
-                  var textElement = cursor.segment.annotations[0];
-                  if (textElement.text == "&gt;") {
-                        addTriangle(cursor);
-                        textElement.visible = false;
-                  }
-            }
-      }*/
       var element = cursor.element;
+      var triangleOffset = 0;
       if (element.type == Element.CHORD) {
-            var note = element.notes[0];
-            if (isSharp(note.pitch)) {
-                  createSharpNote(note.pitch-1, element.durationType, cursor);
-            } else {
-                  createSingleNote(note.pitch, element.durationType, cursor);
+      	  	for (var noteIndex = 0; noteIndex<element.notes.length; noteIndex++) { 
+      	  		var note = element.notes[noteIndex];
+				if (isSharp(note.pitch)) {
+					  createSharpNote(note.pitch-1, element.durationType, cursor, getChordNoteOffset(noteIndex, element.notes.length));
+				} else {
+					  createSingleNote(note.pitch, element.durationType, cursor, getChordNoteOffset(noteIndex, element.notes.length));
+				}
+				note.visible = false;
             }
-            note.visible = false;
+            triangleOffset = getChordNoteOffset(0, element.notes.length); 
       } else if (element.type == Element.REST) {
             createRest(cursor);
       }
-      
+      if (cursor.measure && lastProcessedMeasure != cursor.measure) {
+		    lastProcessedMeasure = cursor.measure;
+		    addTriangle(cursor, triangleOffset);
+	  }
+}
 
+function getChordNoteOffset(noteIndex, noteCount) {
+	switch (noteCount) {
+	case 2:
+		return noteIndex == 0 ? -1 : 1;
+	case 3:
+		if (noteIndex == 0) { return -2; }
+		if (noteIndex == 1) { return 0; }
+		if (noteIndex == 2) { return 2; }
+	case 4:
+		if (noteIndex == 0) { return -3; }
+		if (noteIndex == 1) { return -1; }
+		if (noteIndex == 2) { return 1; }
+		if (noteIndex == 3) { return 3; }
+	default:
+		return 0;
+	}
 }
 
 Item {
