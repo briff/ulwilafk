@@ -4,10 +4,22 @@ import QtQuick.Controls 1.3
 
 MuseScore {
     
-    property variant defaultXOffset : -1.8;
-    property variant defaultYOffset : 2.9;
-    property variant noteTemplate : "<font size=\"36\"/><font face=\"UlwilaFK\"/>";
-    property variant noteSignSize : 5.5;
+    property variant fullXOffset : -1.8;
+    property variant fullYOffset : 2.9;
+    property variant fullFontSize : 36;
+    property variant fullNoteSignSize : 5.5;
+    
+    property variant smallXOffset : -0.9;
+    property variant smallYOffset : 0;
+    property variant smallFontSize : 18;
+    property variant smallNoteSignSize : 2.75;
+    
+    property variant defaultXOffset;
+    property variant defaultYOffset;
+    property variant noteTemplate;
+    property variant noteSignSize;
+    property variant fontSize;
+    
     property variant lastProcessedMeasure: 0;
     
     menuPath:    "Plugins.UlwilaFK"
@@ -92,6 +104,18 @@ MuseScore {
     }
     
     function toUlwila() {
+        if (!chkAboveStaff.checked) {
+            defaultXOffset = fullXOffset;
+            defaultYOffset = fullYOffset;
+            noteSignSize = fullNoteSignSize;
+            fontSize = fullFontSize;        
+        } else {
+            defaultXOffset = smallXOffset;
+            defaultYOffset = smallYOffset;
+            noteSignSize = smallNoteSignSize;
+            fontSize = smallFontSize;        
+        }
+            noteTemplate = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>";        
         console.log("Convert to Ulwila");
         if (typeof curScore === 'undefined')
             return;
@@ -184,9 +208,9 @@ MuseScore {
         if (duration % 480 == 0) {
             for (var i = 0; i<duration; i+=480) {
                 drawNotePart(lowerPitch, 240, cursor, currentOffset, false, chordNoteOffset);
-                currentOffset += 2.6;
+                currentOffset += noteSignSize*0.47;
                 drawNotePart(lowerPitch+2, 240, cursor, currentOffset, true, chordNoteOffset);
-                currentOffset += 2.6;                              
+                currentOffset += noteSignSize*0.47;                              
             }
         } else if (duration == 240) {
             var octaveSign = addOctaveSign(lowerPitch+2, duration, cursor);
@@ -197,7 +221,7 @@ MuseScore {
             var noteSign = createSingleNoteSign(lowerPitch, duration/2, cursor, false, "V");
             noteSign.pos.x = defaultXOffset + currentOffset;
             noteSign.pos.y = defaultYOffset;
-            currentOffset += 1.4;
+            currentOffset += noteSignSize*0.35;
             noteSign = createSingleNoteSign(lowerPitch + 2, duration/2, cursor, false, "W");
             noteSign.pos.x = defaultXOffset + currentOffset;
             noteSign.pos.y = defaultYOffset;
@@ -213,7 +237,7 @@ MuseScore {
         var noteSign = createSingleNoteSign(pitch, duration, cursor, mirror);
         noteSign.pos.x = defaultXOffset + currentOffset;
         noteSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
-        if (duration == 120) { noteSign.pos.x = 0.4 + currentOffset; }
+        if (duration == 120) { noteSign.pos.x = noteSignSize * 0.73 + currentOffset; }
         return noteSign;
     }
     
@@ -222,8 +246,8 @@ MuseScore {
         var temp = duration;
         var noteSign;
         while (temp>0) {
-            if (temp >= 480) { noteSign = drawNotePart(pitch, 480, cursor, currentOffset, false, chordNoteOffset); temp -= 480; currentOffset += 5.2}
-            else if (temp >= 240) { noteSign = drawNotePart(pitch, 240, cursor, currentOffset, false, chordNoteOffset); temp -= 240; currentOffset += 2.6}
+            if (temp >= 480) { noteSign = drawNotePart(pitch, 480, cursor, currentOffset, false, chordNoteOffset); temp -= 480; currentOffset += noteSignSize * 0.95}
+            else if (temp >= 240) { noteSign = drawNotePart(pitch, 240, cursor, currentOffset, false, chordNoteOffset); temp -= 240; currentOffset += noteSignSize*0.47}
             else if (temp >= 120) { noteSign = drawNotePart(pitch, 120, cursor, currentOffset, false, chordNoteOffset); temp -= 120;}
             else { temp = 0; }
         }
@@ -249,7 +273,7 @@ MuseScore {
             if (duration >= 480 || duration == 120) durationSign = ".";
             else if (duration == 240) durationSign = mirror ? "/" : "-";
             text = newElement(Element.STAFF_TEXT);
-            text.text = "<font size=\"36\"/><font face=\"UlwilaFK\"/>" + durationSign;
+            text.text = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>" + durationSign;
             if (octave == 3) {
                 text.color = "black";
             } else if (octave == 5) {
@@ -263,7 +287,7 @@ MuseScore {
     function createRest(cursor) {
         var element = cursor.element;
         var text = newElement(Element.STAFF_TEXT);
-        var noteTemplate = "<font size=\"36\"/><font face=\"UlwilaFK\"/>";
+        var noteTemplate = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>";
         var durationSign = getDurationSign(null, element.durationType, true);
         text.text = noteTemplate + durationSign;
         text.pos.x = defaultXOffset;
@@ -274,8 +298,8 @@ MuseScore {
     function addTriangle(cursor, triangleOffset) {
         var text = newElement(Element.STAFF_TEXT);
         text.text = noteTemplate + "&lt;";
-        text.pos.x = -1.9;
-        text.pos.y = 0 + triangleOffset * noteSignSize / 2.0;
+        text.pos.x = -0.35*noteSignSize;
+        text.pos.y = defaultYOffset - noteSignSize / 2.0 + triangleOffset * noteSignSize / 2.0;
         cursor.add(text);
     }
     
@@ -334,9 +358,16 @@ MuseScore {
             onClicked: { toUlwila(); }
         }
         
+        CheckBox {
+            id: chkAboveStaff
+            anchors.left: btnUlwila.right
+            checked: false
+            text: "Above staff"
+        }
+        
         Button {
             id: btnOriginal
-            anchors.left: btnUlwila.right
+            anchors.left: chkAboveStaff.right
             text: "Everything visible"
             onClicked: { 
                 curScore.startCmd();
@@ -345,6 +376,8 @@ MuseScore {
                 Qt.quit();        
             }
         }
+        
+        
         
         Button {
             id: btnClose
