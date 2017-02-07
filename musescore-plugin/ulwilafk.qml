@@ -14,6 +14,13 @@ MuseScore {
     property variant smallFontSize : 18;
     property variant smallNoteSignSize : 2.75;
     
+    // offset when I want to put a sharp note to an other
+    property variant halfWidthOffset : 0.47;
+    property variant quarterWidthOffset : 0.2;
+    
+    // offset when I overlap one note on the other
+    property variant overlapOffset : 0.67;
+    
     property variant defaultXOffset;
     property variant defaultYOffset;
     property variant noteTemplate;
@@ -208,9 +215,9 @@ MuseScore {
         if (duration % 480 == 0) {
             for (var i = 0; i<duration; i+=480) {
                 drawNotePart(lowerPitch, 240, cursor, currentOffset, false, chordNoteOffset);
-                currentOffset += noteSignSize*0.47;
+                currentOffset += noteSignSize * halfWidthOffset;
                 drawNotePart(lowerPitch+2, 240, cursor, currentOffset, true, chordNoteOffset);
-                currentOffset += noteSignSize*0.47;                              
+                currentOffset += noteSignSize * halfWidthOffset * overlapOffset;                              
             }
         } else if (duration == 240) {
             var octaveSign = addOctaveSign(lowerPitch+2, duration, cursor);
@@ -231,26 +238,61 @@ MuseScore {
     function drawNotePart(pitch, duration, cursor, currentOffset, mirror, chordNoteOffset) {
         var octaveSign = addOctaveSign(pitch, duration, cursor, mirror);
         if (octaveSign) {
-            octaveSign.pos.x = defaultXOffset + currentOffset;
-            octaveSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
+            if (duration != 120) {
+                octaveSign.pos.x = defaultXOffset + currentOffset;
+                octaveSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
+            } else {
+                octaveSign.pos.x = defaultXOffset + currentOffset - noteSignSize / 4;
+                octaveSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0 + noteSignSize / 6;
+            }
         }
+        var contour = addContour(duration, cursor, currentOffset);
+        contour.pos.x = defaultXOffset + currentOffset;
+        contour.pos.y = defaultYOffset + chordNoteOffset;                
         var noteSign = createSingleNoteSign(pitch, duration, cursor, mirror);
         noteSign.pos.x = defaultXOffset + currentOffset;
         noteSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
-        if (duration == 120) { noteSign.pos.x = noteSignSize * 0.73 + currentOffset; }
         return noteSign;
     }
     
-    function createSingleNote(pitch, duration, cursor, chordNoteOffset) {
-        var currentOffset = 0;
-        var temp = duration;
-        var noteSign;
-        while (temp>0) {
-            if (temp >= 480) { noteSign = drawNotePart(pitch, 480, cursor, currentOffset, false, chordNoteOffset); temp -= 480; currentOffset += noteSignSize * 0.95}
-            else if (temp >= 240) { noteSign = drawNotePart(pitch, 240, cursor, currentOffset, false, chordNoteOffset); temp -= 240; currentOffset += noteSignSize*0.47}
-            else if (temp >= 120) { noteSign = drawNotePart(pitch, 120, cursor, currentOffset, false, chordNoteOffset); temp -= 120;}
-            else { temp = 0; }
+    function addContour(duration, cursor) {
+        var text = newElement(Element.STAFF_TEXT);
+        var sign;
+        switch (duration) {
+        case 240: sign = "R"; break;
+        case 120: sign = "F"; break;
+        default: sign = "Q";
         }
+        text.text = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>" + sign;
+        cursor.add(text);
+        return text;
+    }
+    
+    function createSingleNote(pitch, duration, cursor, chordNoteOffset) {
+        var noteSign;
+        var currentOffset = 0;
+        var noOf16th = Math.floor(((duration % 480) % 240) / 120);
+        var noOf8th = Math.floor((duration % 480) / 240);
+        var noOf4th = Math.floor(duration / 480);
+        var currentOffset = noOf4th > 0 ? noOf4th * noteSignSize*overlapOffset : 0;
+        currentOffset += noOf8th > 0 ? (noOf8th) * noteSignSize * halfWidthOffset : 0;
+        currentOffset += noOf16th > 0 ? (noOf16th) * noteSignSize * quarterWidthOffset * 1.1 : 0;
+        if (duration > 120 && duration < 480) {
+            currentOffset += noteSignSize / 8;
+        } else if (duration == 120) {
+            currentOffset += noteSignSize / 4;
+        }
+        for (var i = 0; i < noOf16th; i++) {
+            currentOffset -= noteSignSize * quarterWidthOffset; noteSign = drawNotePart(pitch, 120, cursor, currentOffset, false, chordNoteOffset);
+            currentOffset -= noteSignSize * quarterWidthOffset / 2;
+        }        
+        for (var i = 0; i < noOf8th; i++) {
+            currentOffset -= noteSignSize * halfWidthOffset; noteSign = drawNotePart(pitch, 240, cursor, currentOffset, false, chordNoteOffset); 
+        }
+        for (var i = 0; i < noOf4th; i++) {
+            currentOffset -= noteSignSize * overlapOffset; noteSign = drawNotePart(pitch, 480, cursor, currentOffset, false, chordNoteOffset);
+        }
+
         return noteSign;
     }
     
@@ -273,7 +315,7 @@ MuseScore {
             if (duration >= 480 || duration == 120) durationSign = ".";
             else if (duration == 240) durationSign = mirror ? "/" : "-";
             text = newElement(Element.STAFF_TEXT);
-            text.text = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>" + durationSign;
+            text.text = "<font size=\""+ ( duration == 120 ? Math.floor(fontSize * 0.7) : fontSize )+"\"/><font face=\"UlwilaFK\"/>" + durationSign;
             if (octave == 3) {
                 text.color = "black";
             } else if (octave == 5) {
