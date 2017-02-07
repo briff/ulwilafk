@@ -358,7 +358,18 @@ MuseScore {
                 if (isSharp(note.pitch)) {
                     createSharpNote(note.pitch-1, element.durationType, cursor, getChordNoteOffset(noteIndex, element.notes.length));
                 } else {
+                    var oldNoteSignSize = noteSignSize;
+                    var oldFontSize = fontSize;
+                    if (element.notes.length > 1) {
+                        noteSignSize = noteSignSize * 0.8;
+                        fontSize = fontSize * 0.8;
+                        noteTemplate = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>";        
+                    }
                     createSingleNote(note.pitch, element.durationType, cursor, getChordNoteOffset(noteIndex, element.notes.length));
+                    noteSignSize = oldNoteSignSize;
+                    fontSize = oldFontSize;
+            noteTemplate = "<font size=\""+fontSize+"\"/><font face=\"UlwilaFK\"/>";        
+                    
                 }
                 note.visible = false;
             }
