@@ -246,16 +246,16 @@ MuseScore {
                 octaveSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0 + noteSignSize / 6;
             }
         }
-        var contour = addContour(duration, cursor, currentOffset);
+        var contour = addContour(duration, cursor, currentOffset, mirror, chordNoteOffset);
         contour.pos.x = defaultXOffset + currentOffset;
-        contour.pos.y = defaultYOffset + chordNoteOffset;                
+        contour.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;                
         var noteSign = createSingleNoteSign(pitch, duration, cursor, mirror);
         noteSign.pos.x = defaultXOffset + currentOffset;
         noteSign.pos.y = defaultYOffset + chordNoteOffset * noteSignSize / 2.0;
         return noteSign;
     }
     
-    function addContour(duration, cursor) {
+    function addContour(duration, cursor, currentOffset) {
         var text = newElement(Element.STAFF_TEXT);
         var sign;
         switch (duration) {
